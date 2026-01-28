@@ -2,7 +2,7 @@
   "name": "cookbook",
   "version": "1.0.0",
   "description": "Cookbook API",
-  "main": "app.js",
+  "main": "./src/app.js",
   "directories": {
     "test": "test"
   },
