@@ -57,7 +57,7 @@ nav ul li {
 nav {
   background-color: #f6f6f5;
   padding:0 4em;
-  height:90px;
+  height:fit-content;
 }
 
 nav ul {
@@ -147,9 +147,48 @@ footer {
   background: #f9ebb5;
   border-radius: 2px;
   box-shadow: 1px 1px 3px #bcbcbc;
+  display: block;
 }
 
 .addBookCTA a:hover {
   box-shadow: 1px 1px 3px #707070;
   background: #f7e28f;
 }
+
+/*tablet*/
+@media all and (min-width:426px) and (max-width:768px) {
+  #topBooks > div {
+    flex-wrap:wrap;
+  }
+
+  .book {
+    margin-bottom: 3em;
+  }
+}
+
+/*mobile*/
+@media all and (max-width:425px) {
+
+  header,
+  #topBooks > div,
+  nav > div {
+    flex-direction: column;
+  }
+
+  nav ul {
+    padding-left:0;
+    text-align: center;
+    padding-bottom:1em;
+  }
+
+  .book {
+    margin-bottom: 3em;
+  }
+
+  #about {
+    margin-left:0;
+    text-align: center;
+  }
+
+}
+

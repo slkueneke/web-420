@@ -26,6 +26,7 @@ app.get("/", async(req, res, next)=> {
 <html>
   <head>
     <title>In-N-Out Books</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/stylesheets/styles.css">
   </head>
   <body>
