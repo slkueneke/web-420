@@ -1,3 +1,10 @@
+/*
+Author: Shannon Kueneke
+Date: Feb 3, 2026
+File: test/app.spec.js
+Desc: Jest tests for cookbook app
+*/
+
 const app = require("../src/app");
 const request = require("supertest");
 
