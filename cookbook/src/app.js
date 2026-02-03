@@ -7,6 +7,7 @@ Description: Cookbook App
 const express = require('express');
 //const bcrypt = require('bcryptjs');
 const createError = require('http-errors');
+const recipes = require("../database/recipes");
 
 //create an express app
 const app = express();
@@ -65,6 +66,39 @@ app.get("/", async(req, res, next)=> {
 
   res.send(html); //sends the html content to the client
 });
+
+//get endpoint for /api/recipes (all recipes)
+app.get("/api/recipes", async(req, res, next)=> {
+  try {
+    const allRecipes = await recipes.find();
+    console.log("All recipes: ", allRecipes); //logs all recipes
+    res.send(allRecipes); //sends response with all recipes
+  } catch(err) {
+    console.error("Error: ", err.message); //logs error msg
+    next(err); //passes error to the next middleware
+  }
+});
+
+//get endpoint for /api/recipes/:id (single recipe by id)
+app.get("/api/recipes/:id", async(req, res, next)=> {
+  try {
+    //check if id is a number
+    let { id } = req.params;
+    id = parseInt(id);
+
+    if (isNaN(id)) {
+      return next(createError(400, "Input must be a number"));
+    }
+
+    const recipe = await recipes.findOne({id: Number(req.params.id)});
+    console.log("Recipe: ", recipe);
+    res.send(recipe);
+  } catch(err) {
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
 
 
 // catch 404 and forward to error handler
