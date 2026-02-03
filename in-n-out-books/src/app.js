@@ -8,6 +8,7 @@
 const express = require('express');
 const createError = require('http-errors');
 const path = require('path');
+const books = require('../database/books');
 
 //create an express app
 const app = express();
@@ -148,6 +149,36 @@ app.get("/", async(req, res, next)=> {
   res.send(html); //sends the html content to the client
 });
 
+//get endpoint for /api/books that returns an array of all books
+app.get('/api/books', async(req, res, next)=> {
+  try {
+    const allBooks = await books.find(); //logs all books
+    res.send(allBooks); //sends response with all books
+  } catch(err) {
+    console.error("Error: ", err.message); //logs err msg
+    next(err); //passes err to next middleware
+  }
+});
+
+//get endpoint for /api/books/:id (single book by id)
+app.get('/api/books/:id', async(req, res, next)=> {
+  try {
+    //check if id is a number
+    let { id } = req.params;
+    id = parseInt(id);
+
+    if (isNaN(id)) {
+      return next(createError(400, 'Book ID must be a number'));
+    }
+
+    const book = await books.findOne({id: Number(req.params.id)});
+    console.log("Book: ", book);
+    res.send(book);
+  } catch(err) {
+    console.error("Error: ", err.message);
+    next(err);
+  }
+})
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
