@@ -1,6 +1,7 @@
 /*
 Name: Shannon Kueneke
 Date: January 27, 2026
+File: src/app.js
 Description: Cookbook App
 */
 
