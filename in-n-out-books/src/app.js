@@ -149,7 +149,7 @@ app.get("/", async(req, res, next)=> {
   res.send(html); //sends the html content to the client
 });
 
-//get endpoint for /api/books that returns an array of all books
+//GET endpoint for /api/books that returns an array of all books
 app.get('/api/books', async(req, res, next)=> {
   try {
     const allBooks = await books.find(); //logs all books
@@ -160,7 +160,7 @@ app.get('/api/books', async(req, res, next)=> {
   }
 });
 
-//get endpoint for /api/books/:id (single book by id)
+//GET endpoint for /api/books/:id (single book by id)
 app.get('/api/books/:id', async(req, res, next)=> {
   try {
     //check if id is a number
@@ -178,7 +178,47 @@ app.get('/api/books/:id', async(req, res, next)=> {
     console.error("Error: ", err.message);
     next(err);
   }
-})
+});
+
+//POST endpoint for /api/books (adding a new book)
+app.post("/api/books", async(req, res, next)=> {
+  try {
+    const newBook = req.body;
+
+    const expectedKeys = ["id", "title", "author"];
+    const receivedKeys = Object.keys(newBook);
+
+    if(!receivedKeys.every(key=> expectedKeys.includes(key))|| receivedKeys.length !== expectedKeys.length) {
+      console.error("Bad Request: Missing keys or extra keys", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+
+    const result = await books.insertOne(newBook);
+    console.log("Result: ", result);
+
+    res.status(201).send({id: result.ops[0].id});
+  } catch(err) {
+    console.error("Error: ", err.message());
+    next(err);
+  }
+});
+
+//DELETE endpoint for /api/books/:id
+app.delete("/api/books/:id", async (req, res, next)=> {
+  try {
+    const { id } = req.params;
+    const result = await books.deleteOne({id: parseInt(id) });
+    console.log("Result: ", result);
+    res.status(204).send();
+  } catch (err) {
+    if (err.message === "No matching item found") {
+      return next(createError(404, "Book not found"));
+    }
+
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
