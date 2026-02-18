@@ -5,10 +5,10 @@
   Description: In-N-Out Books App
 */
 
-const express = require('express');
-const createError = require('http-errors');
-const path = require('path');
-const books = require('../database/books');
+const express = require("express");
+const createError = require("http-errors");
+const path = require("path");
+const books = require("../database/books");
 
 //create an express app
 const app = express();
@@ -16,12 +16,12 @@ const app = express();
 //parse incoming req as json payloads
 app.use(express.json());
 //parse incoming urlencoded payloads
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({ extended: true }));
 
 //static files (css, js, img)
 app.use(express.static(path.join(__dirname, "../public")));
 
-app.get("/", async(req, res, next)=> {
+app.get("/", async (req, res, next) => {
   //HTML content for the landing page
   const html = `
 <html>
@@ -150,45 +150,48 @@ app.get("/", async(req, res, next)=> {
 });
 
 //GET endpoint for /api/books that returns an array of all books
-app.get('/api/books', async(req, res, next)=> {
+app.get("/api/books", async (req, res, next) => {
   try {
     const allBooks = await books.find(); //logs all books
     res.send(allBooks); //sends response with all books
-  } catch(err) {
+  } catch (err) {
     console.error("Error: ", err.message); //logs err msg
     next(err); //passes err to next middleware
   }
 });
 
 //GET endpoint for /api/books/:id (single book by id)
-app.get('/api/books/:id', async(req, res, next)=> {
+app.get("/api/books/:id", async (req, res, next) => {
   try {
     //check if id is a number
     let { id } = req.params;
     id = parseInt(id);
 
     if (isNaN(id)) {
-      return next(createError(400, 'Book ID must be a number'));
+      return next(createError(400, "Book ID must be a number"));
     }
 
-    const book = await books.findOne({id: Number(req.params.id)});
+    const book = await books.findOne({ id: Number(req.params.id) });
     console.log("Book: ", book);
     res.send(book);
-  } catch(err) {
+  } catch (err) {
     console.error("Error: ", err.message);
     next(err);
   }
 });
 
 //POST endpoint for /api/books (adding a new book)
-app.post("/api/books", async(req, res, next)=> {
+app.post("/api/books", async (req, res, next) => {
   try {
     const newBook = req.body;
 
     const expectedKeys = ["id", "title", "author"];
     const receivedKeys = Object.keys(newBook);
 
-    if(!receivedKeys.every(key=> expectedKeys.includes(key))|| receivedKeys.length !== expectedKeys.length) {
+    if (
+      !receivedKeys.every((key) => expectedKeys.includes(key)) ||
+      receivedKeys.length !== expectedKeys.length
+    ) {
       console.error("Bad Request: Missing keys or extra keys", receivedKeys);
       return next(createError(400, "Bad Request"));
     }
@@ -196,18 +199,18 @@ app.post("/api/books", async(req, res, next)=> {
     const result = await books.insertOne(newBook);
     console.log("Result: ", result);
 
-    res.status(201).send({id: result.ops[0].id});
-  } catch(err) {
+    res.status(201).send({ id: result.ops[0].id });
+  } catch (err) {
     console.error("Error: ", err.message());
     next(err);
   }
 });
 
 //DELETE endpoint for /api/books/:id
-app.delete("/api/books/:id", async (req, res, next)=> {
+app.delete("/api/books/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
-    const result = await books.deleteOne({id: parseInt(id) });
+    const result = await books.deleteOne({ id: parseInt(id) });
     console.log("Result: ", result);
     res.status(204).send();
   } catch (err) {
@@ -220,22 +223,54 @@ app.delete("/api/books/:id", async (req, res, next)=> {
   }
 });
 
+//PUT endpoint for /api/books/:id
+app.put("/api/books/:id", async (req, res, next) => {
+  try {
+    let { id } = req.params;
+    let book = req.body;
+    id = parseInt(id);
+
+    //400 status is book id is not a number
+    if (isNaN(id)) {
+      return next(createError(400, "Input must be a number"));
+    }
+
+    //400 status if missing book title
+    const receivedKeys = Object.keys(book);
+    if (!receivedKeys.includes("title")) {
+      console.error("Bad Request: Missing book title", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+
+    //204 status for successful book update
+    const result = await books.updateOne({ id: id }, book);
+    res.status(204).send();
+
+  } catch (err) {
+    if (err.message === "No matching item found") {
+      console.log("Book not found", err.message);
+      return next(createError(404, "Book not found"));
+    }
+    console.error("Error", err.message);
+    next(err);
+  }
+});
+
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 //error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   res.status(err.status || 500);
 
   res.json({
-    type: 'error',
+    type: "error",
     status: err.status,
     message: err.message,
-    stack: req.app.get('env') === 'development' ? err.stack : undefined
+    stack: req.app.get("env") === "development" ? err.stack : undefined,
   });
 });
 
 module.exports = app;
-
