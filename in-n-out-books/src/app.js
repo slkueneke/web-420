@@ -8,7 +8,9 @@
 const express = require("express");
 const createError = require("http-errors");
 const path = require("path");
+const bcrypt = require("bcryptjs");
 const books = require("../database/books");
+const users = require("../database/users");
 
 //create an express app
 const app = express();
@@ -206,6 +208,44 @@ app.post("/api/books", async (req, res, next) => {
   }
 });
 
+//POST endpoint for /api/login
+app.post("/api/login", async (req, res, next) => {
+  try {
+    const user = req.body;
+
+    const expectedKeys = ["email", "password"];
+    const receivedKeys = Object.keys(user);
+
+    if (
+      !receivedKeys.every((key) => expectedKeys.includes(key)) ||
+      receivedKeys.length !== expectedKeys.length
+    ) {
+      console.error("Bad Request: Missing keys", receivedKeys);
+      return next(createError(400, "Bad Request"));
+    }
+
+    const dbUser = await users.findOne({ email: user.email });
+    if (!dbUser) {
+      console.error("Unauthorized: User not found");
+      return next(createError(401, "Unauthorized"));
+    }
+
+    const validPassword = bcrypt.compareSync(user.password, dbUser.password);
+
+    if (validPassword) {
+      res
+        .status(200)
+        .send({ user: user.email, message: "Authentication successful" });
+    } else {
+      console.error("Unauthorized: Password incorrect");
+      return next(createError(401, "Unauthorized"));
+    }
+  } catch (err) {
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
 //DELETE endpoint for /api/books/:id
 app.delete("/api/books/:id", async (req, res, next) => {
   try {
@@ -245,7 +285,6 @@ app.put("/api/books/:id", async (req, res, next) => {
     //204 status for successful book update
     const result = await books.updateOne({ id: id }, book);
     res.status(204).send();
-
   } catch (err) {
     if (err.message === "No matching item found") {
       console.log("Book not found", err.message);
