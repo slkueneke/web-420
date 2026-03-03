@@ -2,7 +2,7 @@
 Author: Shannon Kueneke
 Date: Feb 3, 2026
 File: test/app.spec.js
-Desc: Jest tests for In-n-Out Books app
+Desc: Jest tests for In-n-Out Books app.
 */
 
 const app = require("../src/app");
@@ -125,6 +125,53 @@ describe("Chapter 6: API Tests", () => {
 
     expect(res.statusCode).toEqual(400);
     expect(res.body.message).toEqual("Bad Request");
+  });
+});
+
+describe("Chapter 7: API Tests", () => {
+  it("should return a 200 status with 'Security Questions successfully answered' message", async()=> {
+    const res = await request(app)
+      .post("/api/users/harry@hogwarts.edu/verify-security-question")
+      .send({
+        securityQuestions: [
+          { answer: "Hedwig" },
+          { answer: "Quidditch Through the Ages" },
+          { answer: "Evans" },
+        ]
+      });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.message).toEqual("Security Questions successfully answered");
+  });
+
+
+  it("should return a 400 status code with 'Bad Request' message when the request body fails ajv validation", async()=> {
+    const res = await request(app)
+      .post("/api/users/harry@hogwarts.edu/verify-security-question")
+      .send({
+        securityQuestions: [
+          { answer: "Hegwig", question: "What is your pet's name?" },
+          { answer: "Quidditch Through the Ages", myName: "Harry Potter" },
+        ]
+      });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body.message).toEqual("Bad Request");
+  });
+
+  it("should return a 401 status code with 'Unauthorized' message when the security questions answers are incorrect", async()=> {
+    const res = await request(app)
+      .post("/api/users/harry@hogwarts.edu/verify-security-question")
+      .send({
+        securityQuestions: [
+          { answer: "Fluffy" },
+          { answer: "Quidditch Through the Ages" },
+          { answer: "Evans" },
+        ]
+      });
+
+    expect(res.statusCode).toEqual(401);
+    expect(res.body.message).toEqual("Unauthorized");
   });
 
 });

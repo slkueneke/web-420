@@ -2,7 +2,7 @@
   Name: Shannon Kueneke
   Date: 01-27-2026
   File: src/app.js
-  Description: In-N-Out Books App
+  Description: In-N-Out Books App.
 */
 
 const express = require("express");
@@ -11,9 +11,34 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const books = require("../database/books");
 const users = require("../database/users");
+const Ajv = require("ajv");
 
 //create an express app
 const app = express();
+
+//new instance of ajv
+const ajv = new Ajv();
+
+//Ajv JSON schedule object for validating password req body against
+const securityQuestionSchema = {
+  type: "object",
+  properties: {
+    newPassword: { type: "string" },
+    securityQuestions: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          answer: { type: "string" }
+        },
+        required: ["answer"],
+        additionalProperties: false
+      }
+    }
+  },
+  required: [/*"newPassword",*/ "securityQuestions"],
+  additionalProperties: false
+};
 
 //parse incoming req as json payloads
 app.use(express.json());
@@ -241,6 +266,37 @@ app.post("/api/login", async (req, res, next) => {
       return next(createError(401, "Unauthorized"));
     }
   } catch (err) {
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+//POST endpoint for /api/users/:email/verify-security-question
+app.post("/api/users/:email/verify-security-question", async(req, res, next)=> {
+  try {
+    const { email } = req.params;
+    const { securityQuestions } = req.body;
+
+    const validate = ajv.compile(securityQuestionSchema);
+    const valid = validate(req.body);
+
+    if (!valid) {
+      console.error("Bad Request: Invalid request body", validate.errors);
+      return next(createError(400, "Bad Request"));
+    }
+
+    const user = await users.findOne({email: email});
+
+    if (securityQuestions[0].answer !== user.securityQuestions[0].answer ||
+      securityQuestions[1].answer !== user.securityQuestions[1].answer ||
+      securityQuestions[2].answer !== user.securityQuestions[2].answer
+    ) {
+      console.error("Unauthorized: Security questions answers are incorrect");
+      return next(createError(401, "Unauthorized"));
+    } else {
+      res.status(200).send({ message: "Security Questions successfully answered" });
+    }
+  } catch(err) {
     console.error("Error: ", err.message);
     next(err);
   }
